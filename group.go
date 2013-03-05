@@ -11,8 +11,7 @@ var implemented = true // set to false by lookup_stub.go's init
 type Group struct {
 	Gid  string // group id
 	Name string
-	// TODO: How does one convert this from cgo?
-	//Members []string
+	Members []string
 }
 
 type UnknownGroupIdError int

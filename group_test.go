@@ -40,7 +40,15 @@ func compare(t *testing.T, want, got *Group) {
 	if want.Name != got.Name {
 		t.Errorf("got Name=%q; want %q", got.Name, want.Name)
 	}
-	// TODO: add test for group.Members
+	if len(want.Members) != len(got.Members) {
+		t.Errorf("got %d Members; want %d", len(got.Members), len(want.Members))
+	}
+	for i := range want.Members {
+		if want.Members[i] != got.Members[i] {
+			t.Errorf(
+				"got Members[%d]=%q; want %q", got.Members[i], want.Members[i])
+		}
+	}
 }
 
 func TestLookup(t *testing.T) {

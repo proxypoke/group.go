@@ -5,6 +5,7 @@ package group
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -20,6 +21,13 @@ import (
 static int mygetgrgid_r(int gid, struct group *grp,
 	char *buf, size_t buflen, struct group **result) {
  return getgrgid_r(gid, grp, buf, buflen, result);
+}
+
+int array_len(char **array) {
+	int len = 0;
+	for (; *array != NULL; array++)
+		len++;
+	return len;
 }
 */
 import "C"
@@ -96,9 +104,30 @@ func lookup(gid int, groupname string, lookupByName bool) (*Group, error) {
 		}
 	}
 	g := &Group{
-		Gid:  strconv.Itoa(int(grp.gr_gid)),
-		Name: C.GoString(grp.gr_name),
-		//Members: 
+		Gid:     strconv.Itoa(int(grp.gr_gid)),
+		Name:    C.GoString(grp.gr_name),
+		Members: getMembers(grp),
 	}
+
 	return g, nil
+}
+
+func getMembers(grp C.struct_group) []string {
+	// We need to count the members before we can create a slice.
+	nmembers := int(C.array_len(grp.gr_mem))
+
+	members := make([]string, nmembers)
+
+	// Create a slice over the C grp.gr_mem char* array
+	var raw_gr_mem []*C.char
+	sliceHeader := (*reflect.SliceHeader)((unsafe.Pointer(&raw_gr_mem)))
+	sliceHeader.Cap = nmembers
+	sliceHeader.Len = nmembers
+	sliceHeader.Data = uintptr(unsafe.Pointer(grp.gr_mem))
+
+	for idx, m := range raw_gr_mem {
+		members[idx] = C.GoString(m)
+	}
+
+	return members
 }
